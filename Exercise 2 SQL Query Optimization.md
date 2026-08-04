@@ -14,25 +14,26 @@ Note : The data in the dataset is of july 2025 so getting zero records on 90 day
 2: This query is reading data from same table 3 times(Unnecessary) which generally slows down the performance.
 
 3: unnecessary Self-Join two times
-     1:  Self-join, which is not needed is used (recent table)
+
+     '''1:  Self-join, which is not needed is used (recent table)
           JOIN (
              SELECT *
              FROM service_requests
              WHERE created_date >= CURRENT_DATE - INTERVAL '90 days'
               ) AS recent
-           ON sr.unique_key = recent.unique_key
+           ON sr.unique_key = recent.unique_key'''
          --> we already can get the same result applying where condition instead using a self-join.
 
-     2:  Self-join, which is not needed is used (zip_filter)
+    ''' 2:  Self-join, which is not needed is used (zip_filter)
           JOIN (
             SELECT DISTINCT zip_code
             FROM service_requests
             WHERE zip_code IS NOT NULL
             ) AS zip_filter
-         ON sr.zip_code = zip_filter.zip_code
+         ON sr.zip_code = zip_filter.zip_code'''
           --> this join is also not necessary no row id affected by this join, later we are going to use same condition
-           which this join is applying 
-
+           which this join is applying
+           
 4: Using Select * from 
       selecting all rows which are not even needed will decrease the performance of query.
       also we can filter the records earlier before joining the tables is best practice which also increase the query perfromance 
