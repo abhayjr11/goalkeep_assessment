@@ -1,73 +1,23 @@
-# Exercise 2 - SQL Query Optimization
+# Exercise 2 SQL Query Optimization
 
-**Notebook:**  
 https://colab.research.google.com/drive/1bNtVitGQHewiCA1ElvxNHXQQBYcPjNFx?usp=sharing
 
-> **Note**
->
-> The dataset contains data only until **July 2025**. Therefore, using:
->
-> ```sql
-> CURRENT_DATE - INTERVAL '90 days'
-> ```
->
-> returns **0 records**. For demonstration purposes, I used:
->
-> ```sql
-> CURRENT_DATE - INTERVAL '400 days'
-> ```
->
-> so that the query produces meaningful results.
+Note : The data in the dataset is of july 2025 so getting zero records on 90 days condition so i am using 
+400 days instead of 90 days.
 
----
+#1. Review and identify inefficiencies
 
-# 1. Review and Identify Inefficiencies
-
-## 1. Syntax Error
+1: Syntax mistake in line 4 (the comma should not be there)
 
 ```sql
 COUNT(*) AS num_complaints,
 ```
 
-**Issue**
+2: This query is reading data from same table 3 times(Unnecessary) which generally slows down the performance.
 
-There is an extra comma after `COUNT(*) AS num_complaints`.
+3: unnecessary Self-Join two times
 
----
-
-## 2. Multiple Table Scans
-
-The query reads the **same table three times**, which increases I/O and slows down execution.
-
-```sql
-FROM (
-    SELECT *
-    FROM service_requests
-    WHERE complaint_type = 'Noise - Residential'
-) AS sr
-
-JOIN (
-    SELECT *
-    FROM service_requests
-    WHERE created_date >= CURRENT_DATE - INTERVAL '90 days'
-) AS recent
-
-JOIN (
-    SELECT DISTINCT zip_code
-    FROM service_requests
-    WHERE zip_code IS NOT NULL
-) AS zip_filter
-```
-
-**Issue**
-
-- Reads the same table three times.
-- Performs unnecessary work.
-- Higher execution cost.
-
----
-
-## 3. Unnecessary Self Join (`recent`)
+1: Self-join, which is not needed is used (recent table)
 
 ```sql
 JOIN (
@@ -78,21 +28,9 @@ JOIN (
 ON sr.unique_key = recent.unique_key
 ```
 
-**Issue**
+--> we already can get the same result applying where condition instead using a self-join.
 
-This self-join is unnecessary.
-
-The same result can be achieved by applying the filter directly:
-
-```sql
-WHERE created_date >= CURRENT_DATE - INTERVAL '90 days'
-```
-
-This removes an entire table scan.
-
----
-
-## 4. Unnecessary Self Join (`zip_filter`)
+2: Self-join, which is not needed is used (zip_filter)
 
 ```sql
 JOIN (
@@ -103,143 +41,58 @@ JOIN (
 ON sr.zip_code = zip_filter.zip_code
 ```
 
-**Issue**
+--> this join is also not necessary no row id affected by this join, later we are going to use same condition
+which this join is applying
 
-This join does not filter any additional rows because later the query already applies:
-
-```sql
-WHERE zip_code IS NOT NULL
-```
-
-Therefore, this join performs unnecessary work and should be removed.
-
----
-
-## 5. Using `SELECT *`
+4: Using Select * from
 
 ```sql
 SELECT *
 ```
 
-**Issue**
+selecting all rows which are not even needed will decrease the performance of query.
+also we can filter the records earlier before joining the tables is best practice which also increase the query perfromance
 
-Using `SELECT *` retrieves every column, even though only a few are needed.
-
-It is better to select only the required columns:
-
-```sql
-SELECT
-    zip_code,
-    agency,
-    created_date,
-    closed_date
-```
-
-This reduces memory usage and improves performance.
-
----
-
-# 2. Rewrite the Query for Better Performance
+#2. Rewrite the query for improved readability and performance
 
 ```sql
-SELECT
-    zip_code,
-    agency,
-    COUNT(*) AS num_complaints
-FROM service_requests
+select distinct zip_code, agency, count(*)  as num_complaints
+from service_requests
 WHERE complaint_type = 'Noise - Residential'
-    AND created_date >= CURRENT_DATE - INTERVAL '400 days'
-    AND closed_date IS NOT NULL
-    AND zip_code IS NOT NULL
-GROUP BY
-    zip_code,
-    agency
-ORDER BY
-    num_complaints DESC
-LIMIT 10;
+and created_date >= CURRENT_DATE - INTERVAL '400 days'
+and closed_date IS NOT NULL
+and zip_code IS NOT NULL
+group by 1,2
+order by num_complaints DESC
+limit 10;
 ```
 
-### Improvements
-
-- ✅ Single table scan
-- ✅ Removed unnecessary joins
-- ✅ Early filtering
-- ✅ Better readability
-- ✅ Lower execution cost
-
----
-
-# 3. Rewrite Using CTEs
+#3. Use CTEs to break query logic into smaller chunks
 
 ```sql
-WITH cte_com_type AS (
-
-    SELECT
-        zip_code,
-        agency,
-        created_date,
-        closed_date
-    FROM service_requests
-    WHERE complaint_type = 'Noise - Residential'
+with cte_com_type as (
+select zip_code, agency, created_date, closed_date
+from service_requests
+WHERE complaint_type = 'Noise - Residential'
 
 ),
 
-cte_within_time_interval AS (
-
-    SELECT
-        zip_code,
-        agency,
-        created_date,
-        closed_date
-    FROM cte_com_type
-    WHERE created_date >= CURRENT_DATE - INTERVAL '400 days'
-
+cte_within_time_interval as (
+select zip_code, agency, created_date, closed_date
+from cte_com_type
+where created_date >= CURRENT_DATE - INTERVAL '400 days'
 )
 
-SELECT
-    zip_code,
-    agency,
-    COUNT(*) AS num_complaints
-FROM cte_within_time_interval
-WHERE closed_date IS NOT NULL
-    AND zip_code IS NOT NULL
-GROUP BY
-    zip_code,
-    agency
-ORDER BY
-    num_complaints DESC
-LIMIT 10;
+select zip_code, agency, count(*) as num_complaints
+from cte_within_time_interval
+where closed_date IS NOT NULL and zip_code IS NOT NULL
+group by zip_code, agency
+order by num_complaints DESC
+limit 10;
 ```
 
-### Why use CTEs?
+#4. Note: the output of the optimized query should remain the same
 
-- Improves readability.
-- Breaks complex logic into smaller steps.
-- Easier to debug.
-- Easier to maintain.
-- Modern query optimizers usually generate an efficient execution plan for simple CTEs.
+Output is remains same for all two query i wrote
 
----
-
-# 4. Output Validation
-
-Both the optimized query and the CTE version return the **same result**, confirming that the optimization does not change the output.
-
-<p align="center">
-<img src="https://github.com/user-attachments/assets/3c04f6e9-0fbd-48f5-bd88-d8095992e040" width="350">
-</p>
-
----
-
-# Summary
-
-| Improvement | Status |
-|-------------|--------|
-| Fixed syntax error | ✅ |
-| Removed unnecessary self-joins | ✅ |
-| Reduced table scans (3 → 1) | ✅ |
-| Removed `SELECT *` | ✅ |
-| Applied filters earlier | ✅ |
-| Improved readability | ✅ |
-| Used CTEs for modular query design | ✅ |
-| Output remains unchanged | ✅ |
+<img width="336" height="307" alt="image" src="https://github.com/user-attachments/assets/3c04f6e9-0fbd-48f5-bd88-d8095992e040" />
