@@ -1,6 +1,6 @@
 # goalkeep_assessment
 
-all the data, file, info are private and is not shared to anyone
+Note : all the data, file, info are private and is not shared to anyone
 
 
 2. For task 2 please open : Exercise 2 SQL Query Optimization.md file in repo.                                                   
