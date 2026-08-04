@@ -75,20 +75,8 @@ limit 10;
 #4. Note: the output of the optimized query should remain the same
 
 Output is remains same for all two query I wrote
-+--------+------+--------------+
-|zip_code|agency|num_complaints|
-+--------+------+--------------+
-| 10457| NYPD| 28|
-| 11207| NYPD| 23|
-| 11221| NYPD| 23|
-| 10468| NYPD| 20|
-| 10462| NYPD| 19|
-| 11226| NYPD| 18|
-| 11249| NYPD| 18|
-| 11385| NYPD| 18|
-| 10467| NYPD| 18|
-| 10463| NYPD| 17|
-+--------+------+--------------+
+<img width="336" height="307" alt="image" src="https://github.com/user-attachments/assets/97221f83-169e-4424-b388-1c6e18a17e9a" />
+
 
 #5. Explain your optimization choices (as comments or a short paragraph).
 #6. Submit the optimized query as a text file
