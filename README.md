@@ -80,9 +80,5 @@ Output is remains same for all two query I wrote
 
 #5. Explain your optimization choices (as comments or a short paragraph).
 #6. Submit the optimized query as a text file
-Ginger is not active here 😥
-Please reload your page to activate your extension.
-Activate my extension
-
 
 
