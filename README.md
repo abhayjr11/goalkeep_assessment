@@ -1,8 +1,10 @@
 # goalkeep_assessment
+
 all the data, file, info are private and is not shared to anyone
 
 
-Exercise 2 SQL Query Optimization
+Exercise 2 SQL Query Optimization:
+https://colab.research.google.com/drive/1bNtVitGQHewiCA1ElvxNHXQQBYcPjNFx?usp=sharing
 
 Note : The data in the dataset is of july 2025 so getting zero records on 90 days condition so i am using 
 400 days instead of 90 days.
